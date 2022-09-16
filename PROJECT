@@ -1,0 +1,16 @@
+domain: k8.interactive.job
+layout:
+- go.kubebuilder.io/v3
+projectName: k8-interactive
+repo: k8.interactive.job
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: k8.interactive.job
+  group: batch
+  kind: InteractiveJob
+  path: k8.interactive.job/api/v1
+  version: v1
+version: "3"

@@ -1,0 +1,15 @@
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: jupyter
+  labels:
+    app: jupyter
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: minimal-notebook
+        image: jupyter/tensorflow-notebook:latest
+        ports:
+        - containerPort: 8888

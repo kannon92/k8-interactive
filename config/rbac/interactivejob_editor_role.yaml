@@ -1,0 +1,24 @@
+# permissions for end users to edit interactivejobs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: interactivejob-editor-role
+rules:
+- apiGroups:
+  - batch.k8.interactive.job
+  resources:
+  - interactivejobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch.k8.interactive.job
+  resources:
+  - interactivejobs/status
+  verbs:
+  - get

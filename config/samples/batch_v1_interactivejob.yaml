@@ -1,0 +1,6 @@
+apiVersion: batch.k8.interactive.job/v1
+kind: InteractiveJob
+metadata:
+  name: interactivejob-sample
+spec:
+  # TODO(user): Add fields here

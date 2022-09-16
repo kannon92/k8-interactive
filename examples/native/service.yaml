@@ -1,0 +1,10 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: jupyter
+spec:
+  type: NodePort
+  selector:
+    app: jupyter
+  ports:
+  - port: 8888
