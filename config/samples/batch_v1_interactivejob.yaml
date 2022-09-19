@@ -3,4 +3,17 @@ kind: InteractiveJob
 metadata:
   name: interactivejob-sample
 spec:
-  # TODO(user): Add fields here
+  jobtemplate:
+    spec: 
+      template: 
+        metadata:
+          labels:
+            app: jupyter
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: minimal-notebook
+            image: jupyter/tensorflow-notebook:latest
+            ports:
+            - containerPort: 8888
+

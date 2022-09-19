@@ -62,7 +62,6 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	constructJobForInteractiveJob := func(interactiveJob *interactive.InteractiveJob) (*batchv1.Job, error) {
-		// We want job names for a given nominal start time to have a deterministic name to avoid the same job being created twice
 		name := fmt.Sprintf("%s", interactiveJob.Name)
 
 		job := &batchv1.Job{
@@ -88,8 +87,6 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 		return job, nil
 	}
-	// +kubebuilder:docs-gen:collapse=constructJobForInteractiveJob
-
 	// actually make the job...
 	job, err := constructJobForInteractiveJob(&interactiveJob)
 	if err != nil {
@@ -114,6 +111,9 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			for _, port := range v.Ports {
 				servicePorts = append(servicePorts, corev1.ServicePort{Port: port.ContainerPort})
 			}
+		}
+		if len(servicePorts) == 0 {
+			return nil, fmt.Errorf("The Job Template needs to have container ports")
 		}
 		service := &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
@@ -142,6 +142,7 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	}
 
+	// Construct a service object from
 	service, serviceErr := constructServiceForInteractiveJob(&interactiveJob)
 	if serviceErr != nil {
 		log.Error(serviceErr, "Unable to create service for interactive job")
