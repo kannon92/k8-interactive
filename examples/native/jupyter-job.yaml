@@ -6,6 +6,9 @@ metadata:
     app: jupyter
 spec:
   template:
+    metadata:
+      labels:
+        app: jupyter
     spec:
       restartPolicy: Never
       containers:

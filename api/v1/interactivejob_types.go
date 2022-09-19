@@ -17,9 +17,8 @@ limitations under the License.
 package v1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -31,14 +30,17 @@ type InteractiveJobSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of InteractiveJob. Edit interactivejob_types.go to remove/update
-	Job 	batchv1.Job `json:"job,omitempty"`
-	Service corev1.Service `json:"service,omitempty"`
+	JobTemplate batchv1.JobTemplateSpec `json:"jobtemplate,omitempty"`
 }
 
 // InteractiveJobStatus defines the observed state of InteractiveJob
 type InteractiveJobStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// +optional
+	// +listType=map
+	// +listMapKey=type
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 //+kubebuilder:object:root=true
