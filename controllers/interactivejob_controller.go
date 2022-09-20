@@ -152,7 +152,7 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	log.V(1).Info("created Job for InteractiveJob run", "job", interactiveJob)
-	return ctrl.Result{}, nil
+	return ctrl.Result{Requeue: true}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

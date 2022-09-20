@@ -73,10 +73,23 @@ var _ = Describe("InteractiveJob controller", func() {
 				return true
 			}, timeout, interval).Should(BeTrue())
 			// This should create Job and Service object
-			//job := batchv1.Job{}
-			//service := v1.Service{}
-			//Expect(k8sClient.Get(ctx, interactiveJobLookup, &job)).Should(Succeed())
-			//Expect(k8sClient.Get(ctx, interactiveJobLookup, &service)).Should(Succeed())
+			job := batchv1.Job{}
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, interactiveJobLookup, &job)
+				if err != nil {
+					return false
+				}
+				return true
+			}, timeout, interval).Should(BeTrue())
+			service := v1.Service{}
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, interactiveJobLookup, &service)
+				if err != nil {
+					return false
+				}
+				return true
+			}, timeout, interval).Should(BeTrue())
+
 		})
 	})
 })
