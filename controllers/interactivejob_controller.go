@@ -18,8 +18,8 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -28,7 +28,8 @@ import (
 	interactive "k8.interactive.job/api/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	converters "k8.interactive.job/converters"
 )
 
 // InteractiveJobReconciler reconciles a InteractiveJob object
@@ -62,28 +63,13 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	constructJobForInteractiveJob := func(interactiveJob *interactive.InteractiveJob) (*batchv1.Job, error) {
-		name := fmt.Sprintf("%s", interactiveJob.Name)
+		log.Info("InteractiveJob", "IJ", interactiveJob.Spec)
+		job := converters.GenerateJobFromInteractiveJob(interactiveJob)
 
-		job := &batchv1.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels:      make(map[string]string),
-				Annotations: make(map[string]string),
-				Name:        name,
-				Namespace:   interactiveJob.Namespace,
-			},
-			Spec: *interactiveJob.Spec.JobTemplate.Spec.DeepCopy(),
-		}
-
-		for k, v := range interactiveJob.Spec.JobTemplate.Labels {
-			job.Labels[k] = v
-		}
-
-		for k, v := range interactiveJob.Spec.JobTemplate.Annotations {
-			job.Annotations[k] = v
-		}
 		if err := ctrl.SetControllerReference(interactiveJob, job, r.Scheme); err != nil {
 			return nil, err
 		}
+		log.Info("Job", "Job", job)
 
 		return job, nil
 	}
@@ -92,47 +78,22 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err != nil {
 		log.Error(err, "unable to construct job from template")
 		// don't bother requeuing until we get a change to the spec
-		return ctrl.Result{}, nil
-	}
-
-	// ...and create it on the cluster
-	if err := r.Create(ctx, job); err != nil {
-		log.Error(err, "unable to create Job for InteractiveJob", "job", job)
 		return ctrl.Result{}, err
+	}
+	// ...and create it on the cluster
+	log.Info("Job created from Interactive Job", "job", job.Name)
+	if err := r.Create(ctx, job); err != nil {
+		if !apierrors.IsAlreadyExists(err) {
+			log.Error(err, "unable to create Job for InteractiveJob", "job", job)
+			return ctrl.Result{}, err
+		}
 	}
 
 	constructServiceForInteractiveJob := func(interactiveJob *interactive.InteractiveJob) (*corev1.Service, error) {
-		name := fmt.Sprintf("%s-service", job.Name)
-
-		// Need to get port and name from job
-
-		servicePorts := make([]corev1.ServicePort, 1)
-		for _, v := range interactiveJob.Spec.JobTemplate.Spec.Template.Spec.Containers {
-			for _, port := range v.Ports {
-				servicePorts = append(servicePorts, corev1.ServicePort{Port: port.ContainerPort})
-			}
-		}
-		if len(servicePorts) == 0 {
-			return nil, fmt.Errorf("The Job Template needs to have container ports")
-		}
-		service := &corev1.Service{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels:      make(map[string]string),
-				Annotations: make(map[string]string),
-				Name:        name,
-				Namespace:   interactiveJob.Namespace,
-			},
-			Spec: corev1.ServiceSpec{
-				Type:  "NodePort",
-				Ports: servicePorts,
-			},
-		}
-		for k, v := range interactiveJob.Spec.JobTemplate.Annotations {
-			service.Annotations[k] = v
-		}
-
-		for k, v := range interactiveJob.Spec.JobTemplate.Labels {
-			service.Labels[k] = v
+		service, err := converters.GenerateServiceFromInteractiveJob(interactiveJob)
+		if err != nil {
+			log.Error(err, "Unable to Construct Service")
+			return nil, err
 		}
 		if err := ctrl.SetControllerReference(interactiveJob, service, r.Scheme); err != nil {
 			return nil, err
@@ -146,13 +107,16 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	service, serviceErr := constructServiceForInteractiveJob(&interactiveJob)
 	if serviceErr != nil {
 		log.Error(serviceErr, "Unable to create service for interactive job")
+		return ctrl.Result{}, serviceErr
 	}
 	if serviceErr := r.Create(ctx, service); serviceErr != nil {
-		log.Error(serviceErr, "unable to create Service for InteractiveJob", "service", service)
+		if !apierrors.IsAlreadyExists(serviceErr) {
+			log.Error(serviceErr, "unable to create Service for InteractiveJob", "service", service)
+			return ctrl.Result{}, serviceErr
+		}
 	}
 
-	log.V(1).Info("created Job for InteractiveJob run", "job", interactiveJob)
-	return ctrl.Result{Requeue: true}, nil
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

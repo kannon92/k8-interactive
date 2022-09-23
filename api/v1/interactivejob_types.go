@@ -30,7 +30,7 @@ type InteractiveJobSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of InteractiveJob. Edit interactivejob_types.go to remove/update
-	JobTemplate batchv1.JobTemplateSpec `json:"jobtemplate,omitempty"`
+	JobTemplate batchv1.JobSpec `json:"jobtemplate,omitempty"`
 }
 
 // InteractiveJobStatus defines the observed state of InteractiveJob

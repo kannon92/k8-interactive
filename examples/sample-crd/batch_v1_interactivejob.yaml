@@ -1,19 +1,20 @@
 apiVersion: batch.k8.interactive.job/v1
 kind: InteractiveJob
 metadata:
-  name: interactivejob-sample
+  name: jupyter-ij
+  labels:
+    app: jupyter-ij
 spec:
   jobtemplate:
-    spec: 
-      template: 
-        metadata:
-          labels:
-            app: jupyter
-        spec:
-          restartPolicy: Never
-          containers:
-          - name: minimal-notebook
-            image: jupyter/tensorflow-notebook:latest
-            ports:
-            - containerPort: 8888
+    template: 
+      metadata:
+        labels:
+          app: jupyter-ij
+      spec:
+        restartPolicy: Never
+        containers:
+        - name: minimal-notebook
+          image: jupyter/tensorflow-notebook:latest
+          ports:
+          - containerPort: 8888
 
