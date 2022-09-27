@@ -12,10 +12,8 @@ import (
 func GenerateServiceFromInteractiveJob(interactiveJob *interactive.InteractiveJob) (*corev1.Service, error) {
 	serviceName := fmt.Sprintf("%s-service", interactiveJob.Name)
 	servicePorts := make([]corev1.ServicePort, 1)
-	for _, v := range interactiveJob.Spec.JobTemplate.Template.Spec.Containers {
-		for index, port := range v.Ports {
-			servicePorts[index] = corev1.ServicePort{Port: port.ContainerPort}
-		}
+	for index, port := range interactiveJob.Spec.Service.Ports {
+		servicePorts[index] = corev1.ServicePort{Port: port}
 	}
 	if len(servicePorts) == 0 {
 		return nil, fmt.Errorf("The Job Template needs to have container ports")
@@ -40,6 +38,7 @@ func GenerateServiceFromInteractiveJob(interactiveJob *interactive.InteractiveJo
 
 func GenerateJobFromInteractiveJob(interactiveJob *interactive.InteractiveJob) *batchv1.Job {
 
+	var backoffLimit int32 = 1
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels:      interactiveJob.Labels,
@@ -48,6 +47,8 @@ func GenerateJobFromInteractiveJob(interactiveJob *interactive.InteractiveJob) *
 			Namespace:   interactiveJob.Namespace,
 		},
 		Spec: batchv1.JobSpec{
+			ActiveDeadlineSeconds: interactiveJob.Spec.JobTemplate.ActiveDeadlineSeconds,
+			BackoffLimit:          &backoffLimit,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: interactiveJob.Labels,

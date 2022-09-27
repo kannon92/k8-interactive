@@ -39,6 +39,8 @@ func TestServiceConversion(t *testing.T) {
 func TestJobConversion(t *testing.T) {
 	selector := make(map[string]string)
 	selector["app"] = "test"
+	var backoffLimit int32 = 1
+	var activeDeadlineSeconds int64 = 10000
 
 	job := GenerateJobFromInteractiveJob(interactiveJobSample())
 	expectedJob := &batchv1.Job{
@@ -48,6 +50,8 @@ func TestJobConversion(t *testing.T) {
 			Labels:    selector,
 		},
 		Spec: batchv1.JobSpec{
+			BackoffLimit:          &backoffLimit,
+			ActiveDeadlineSeconds: &activeDeadlineSeconds,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: selector,
@@ -79,10 +83,17 @@ func TestJobConversion(t *testing.T) {
 func interactiveJobSample() *interactive.InteractiveJob {
 	labels := make(map[string]string)
 	labels["app"] = "test"
+	var backoffLimit int32 = 1
+	var activeDeadlineSeconds int64 = 10000
 	testJob := &interactive.InteractiveJob{
 		ObjectMeta: v1.ObjectMeta{Name: "test", Namespace: "test", Labels: labels},
 		Spec: interactive.InteractiveJobSpec{
+			Service: interactive.ServiceConfig{
+				Ports: []int32{8888},
+			},
 			JobTemplate: batchv1.JobSpec{
+				BackoffLimit:          &backoffLimit,
+				ActiveDeadlineSeconds: &activeDeadlineSeconds,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: v1.ObjectMeta{
 						Labels: labels,

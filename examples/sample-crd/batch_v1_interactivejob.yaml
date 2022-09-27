@@ -5,7 +5,12 @@ metadata:
   labels:
     app: jupyter-ij
 spec:
+  service:
+    ports: 
+    - 8888
   jobtemplate:
+    activeDeadlineSeconds: 6000
+    backoffLimit: 1
     template: 
       metadata:
         labels:

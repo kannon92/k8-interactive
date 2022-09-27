@@ -21,6 +21,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type IngressConfig struct {
+	Default            bool              `json:"default,omitempty"`
+	Ports              []int32           `json:"ports,omitempty"`
+	IngressAnnotations map[string]string `json:"ingressannotations,omitempty"`
+	TlsEnabled         bool              `json:"tlsenabled,omitempty"`
+	CertName           string            `json:"certname,omitempty"`
+}
+
+type ServiceConfig struct {
+	Ports []int32 `json:"ports"`
+}
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -30,17 +42,17 @@ type InteractiveJobSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of InteractiveJob. Edit interactivejob_types.go to remove/update
-	JobTemplate batchv1.JobSpec `json:"jobtemplate,omitempty"`
+	JobTemplate batchv1.JobSpec `json:"jobtemplate"`
+	Ingress     IngressConfig   `json:"ingress,omitempty"`
+	Service     ServiceConfig   `json:"service"`
 }
 
+// +kubebuilder:printcolumn:name="JobStatus",type=string,JSONPath=`.status.jobstatus`
 // InteractiveJobStatus defines the observed state of InteractiveJob
 type InteractiveJobStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	// +optional
-	// +listType=map
-	// +listMapKey=type
-	Conditions []metav1.Condition `json:"conditions,omitempty"`
+	JobStatus string `json:"jobstatus,omitempty"`
 }
 
 //+kubebuilder:object:root=true

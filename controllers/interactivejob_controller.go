@@ -63,13 +63,11 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	constructJobForInteractiveJob := func(interactiveJob *interactive.InteractiveJob) (*batchv1.Job, error) {
-		log.Info("InteractiveJob", "IJ", interactiveJob.Spec)
 		job := converters.GenerateJobFromInteractiveJob(interactiveJob)
 
 		if err := ctrl.SetControllerReference(interactiveJob, job, r.Scheme); err != nil {
 			return nil, err
 		}
-		log.Info("Job", "Job", job)
 
 		return job, nil
 	}
@@ -81,10 +79,25 @@ func (r *InteractiveJobReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, err
 	}
 	// ...and create it on the cluster
-	log.Info("Job created from Interactive Job", "job", job.Name)
 	if err := r.Create(ctx, job); err != nil {
 		if !apierrors.IsAlreadyExists(err) {
 			log.Error(err, "unable to create Job for InteractiveJob", "job", job)
+			return ctrl.Result{}, err
+		}
+		emptyJob := batchv1.Job{}
+		if err := r.Get(ctx, req.NamespacedName, &emptyJob); err != nil {
+			log.Error(err, "Cant find job corresponding to InteractiveJob")
+			return ctrl.Result{}, err
+		}
+		status := "FAILED"
+		if emptyJob.Status.Active > 0 {
+			status = "RUNNING"
+		} else if emptyJob.Status.Succeeded > 0 {
+			status = "SUCCEEDED"
+		}
+		interactiveJob.Status.JobStatus = status
+		if err := r.Update(ctx, &interactiveJob); err != nil {
+			log.Error(err, "Unable to update interactive job")
 			return ctrl.Result{}, err
 		}
 	}

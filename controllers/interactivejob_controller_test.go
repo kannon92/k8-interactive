@@ -45,6 +45,9 @@ var _ = Describe("InteractiveJob controller", func() {
 					Namespace: InteractiveJobNamespace,
 				},
 				Spec: interactive.InteractiveJobSpec{
+					Service: interactive.ServiceConfig{
+						Ports: []int32{8888},
+					},
 					JobTemplate: batchv1.JobSpec{
 						// For simplicity, we only fill out the required fields.
 						Template: v1.PodTemplateSpec{
